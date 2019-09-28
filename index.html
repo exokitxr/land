@@ -1,0 +1,96 @@
+<!doctype html>
+<html>
+<body>
+  <input type=button value="Enter XR" onclick="document.getElementById('xr-engine').enterXr();">
+  <script type=module src="https://web.exokit.org/ew.js"></script>
+  <script src="js/three.min.js"></script>
+  <template is=xr-engine-template>
+    <html>
+    <body>
+      <xr-site>
+        <xr-iframe extents="[0 0 15 15]"></xr-iframe>
+        <xr-iframe extents="[16 16 29 29]"></xr-iframe>
+        <xr-iframe extents="[16 0 28 15] 29 15"></xr-iframe>
+        <xr-iframe extents="[29 0 29 14]"></xr-iframe>
+        <xr-iframe extents="[0 16 15 29]"></xr-iframe>
+      </xr-site>
+      <script src="https://threejs.org/build/three.min.js"></script>
+      <script src="js/GLTFLoader.js"></script>
+<script>
+(async () => {
+
+const xrSite = document.querySelector('xr-site');
+
+const renderer = new THREE.WebGLRenderer({
+  antialias: true,
+  alpha: true,
+});
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.sortObjects = false;
+// renderer.shadowMap.enabled = true;
+// renderer.shadowMap.type = THREE.PCFShadowMap;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.matrixAutoUpdate = false;
+
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+scene.add(camera);
+
+const ambientLight = new THREE.AmbientLight(0xFFFFFF, 4);
+scene.add(ambientLight);
+
+const directionalLight = new THREE.DirectionalLight(0xFFFFFF, 1);
+directionalLight.position.set(1, 1, 1);
+scene.add(directionalLight);
+
+const summerMesh = (() => {
+  const object = new THREE.Object3D();
+
+  const loader = new THREE.GLTFLoader()//.setPath( 'models/' );
+  loader.load('summer.glb', function(o) {
+    o = o.scene;
+    o.traverse(e => {
+      if (e.isMesh) {
+        e.receiveShadow = true;
+
+        e.material.color = new THREE.Color(0.4, 0.4, 0.4);
+        e.material.metalness = 0.4;
+        e.material.roughness = 1;
+        e.material.emissive = new THREE.Color(0.1, 0.1, 0.1);
+      }
+    });
+
+    o.updateMatrixWorld();
+    object.add(o);
+  }, undefined, function(e) {
+    console.error(e);
+  });
+
+  return object;
+})();
+scene.add(summerMesh);
+
+const session = await xrSite.requestSession();
+xrSite.layers.push(renderer.domElement);
+renderer.vr.setSession(session, {
+  frameOfReferenceType: 'stage',
+});
+renderer.setSize(xrSite.width, xrSite.height);
+renderer.setPixelRatio(1);
+renderer.vr.enabled = true;
+renderer.vr.setAnimationLoop(animate);
+
+function animate() {
+  renderer.render(scene, camera);
+}
+// renderer.setAnimationLoop(animate);
+
+})();
+</script>
+    </body>
+    </html>
+  </template>
+</body>
+</html>
