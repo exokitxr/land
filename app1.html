@@ -36,6 +36,7 @@ const summerMesh = (() => {
   const loader = new THREE.GLTFLoader()//.setPath( 'models/' );
   loader.load('swamp.glb', function(o) {
     o = o.scene;
+    window.o = o;
     o.traverse(e => {
       if (e.isMesh) {
         e.receiveShadow = true;
