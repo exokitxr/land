@@ -34,7 +34,7 @@ const summerMesh = (() => {
   const object = new THREE.Object3D();
 
   const loader = new THREE.GLTFLoader()//.setPath( 'models/' );
-  loader.load('swamp.glb', function(o) {
+  loader.load('room.glb', function(o) {
     o = o.scene;
     window.o = o;
     o.traverse(e => {
