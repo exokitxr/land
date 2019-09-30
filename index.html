@@ -46,7 +46,7 @@ directionalLight.position.set(1, 1, 1);
 scene.add(directionalLight);
 
 const cubeMesh = (() => {
-  const geometry = new THREE.BoxBufferGeometry(1, 10, 1)
+  const geometry = new THREE.BoxBufferGeometry(0.1, 10, 0.1)
     .applyMatrix(new THREE.Matrix4().makeTranslation(0, 10/2, 0));
   const materials = new THREE.MeshPhongMaterial({
     color: 0x808080,
