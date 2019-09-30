@@ -67,9 +67,14 @@ renderer.vr.enabled = true;
 renderer.vr.setAnimationLoop(animate);
 
 function animate() {
+  /* const f2 = (Date.now() % 30000) / 30000;
+  camera.position.set(Math.cos(f2*Math.PI*2)*3, 3, Math.sin(f2*Math.PI*2)*3);
+  camera.lookAt(new THREE.Vector3());
+  xrSite.cameraPosition = camera.position.toArray();
+  xrSite.cameraOrientation = camera.quaternion.toArray(); */
+
   renderer.render(scene, camera);
 }
-// renderer.setAnimationLoop(animate);
 
 })();
 </script>
