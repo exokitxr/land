@@ -1,0 +1,96 @@
+<!doctype html>
+<html>
+<body>
+<script src="https://threejs.org/build/three.min.js"></script>
+<script src="js/GLTFLoader.js"></script>
+<script>
+(async () => {
+
+const renderer = new THREE.WebGLRenderer({
+  antialias: true,
+  alpha: true,
+});
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.sortObjects = false;
+// renderer.shadowMap.enabled = true;
+// renderer.shadowMap.type = THREE.PCFShadowMap;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.matrixAutoUpdate = false;
+
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+scene.add(camera);
+
+const ambientLight = new THREE.AmbientLight(0xFFFFFF, 4);
+scene.add(ambientLight);
+
+const directionalLight = new THREE.DirectionalLight(0xFFFFFF, 1);
+directionalLight.position.set(1, 1, 1);
+scene.add(directionalLight);
+
+const summerMesh = (() => {
+  const object = new THREE.Object3D();
+
+  const loader = new THREE.GLTFLoader()//.setPath( 'models/' );
+  loader.load('summer.glb', function(o) {
+    o = o.scene;
+    o.traverse(e => {
+      if (e.isMesh) {
+        e.receiveShadow = true;
+
+        e.material.color = new THREE.Color(0.4, 0.4, 0.4);
+        e.material.metalness = 0.4;
+        e.material.roughness = 1;
+        e.material.emissive = new THREE.Color(0.1, 0.1, 0.1);
+      }
+    });
+
+    o.updateMatrixWorld();
+    object.add(o);
+  }, undefined, function(e) {
+    console.error(e);
+  });
+
+  return object;
+})();
+scene.add(summerMesh);
+
+const session = await navigator.xr.requestSession();
+session.layers && session.layers.push(renderer.domElement);
+session.requestAnimationFrame((timestamp, frame) => {
+  renderer.vr.setSession(session, {
+    frameOfReferenceType: 'stage',
+  });
+
+  const pose = frame.getViewerPose();
+  const viewport = session.baseLayer.getViewport(pose.views[0]);
+  // const width = viewport.width;
+  const height = viewport.height;
+  const fullWidth = (() => {
+    let result = 0;
+    for (let i = 0; i < pose.views.length; i++) {
+      result += session.baseLayer.getViewport(pose.views[i]).width;
+    }
+    return result;
+  })();
+  renderer.setSize(fullWidth, height);
+  renderer.setPixelRatio(1);
+
+  renderer.setAnimationLoop(null);
+
+  renderer.vr.enabled = true;
+  renderer.vr.setSession(session);
+  renderer.vr.setAnimationLoop(animate);
+});
+
+function animate() {
+  renderer.render(scene, camera);
+}
+// renderer.setAnimationLoop(animate);
+
+})();
+</script>
+</body>
+</html>
