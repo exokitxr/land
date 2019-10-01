@@ -23,12 +23,12 @@ scene.matrixAutoUpdate = false;
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
 scene.add(camera);
 
-/* const ambientLight = new THREE.AmbientLight(0xFFFFFF, 4);
-scene.add(ambientLight);
+/* const ambientLight = new THREE.AmbientLight(0x333333, 1);
+scene.add(ambientLight); */
 
-const directionalLight = new THREE.DirectionalLight(0xFFFFFF, 1);
-directionalLight.position.set(1, 1, 1);
-scene.add(directionalLight); */
+const directionalLight = new THREE.DirectionalLight(0x808080, 2);
+directionalLight.position.set(30, 50, 30);
+scene.add(directionalLight);
 
 const summerMesh = (() => {
   const object = new THREE.Object3D();
@@ -39,9 +39,23 @@ const summerMesh = (() => {
     console.log('loaded model', o);
     window.o = o;
     o = o.scene;
+    const map = null;
     o.traverse(e => {
       if (e.isMesh) {
-        e.receiveShadow = true;
+        // e.receiveShadow = true;
+
+        if (Array.isArray(e.material)) {
+          for (let material of e.material) {
+            if (material.isMeshBasicMaterial) {
+              continue;
+            }
+            material.envMap = map;
+            material.needsUpdate = true;
+          }
+        } else if (e.material && !e.material.isMeshBasicMaterial) {
+          e.material.envMap = map;
+          e.material.needsUpdate = true;
+        }
 
         /* e.material.color = new THREE.Color(0.4, 0.4, 0.4);
         e.material.metalness = 0.4;
