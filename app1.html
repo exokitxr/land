@@ -10,6 +10,10 @@ const renderer = new THREE.WebGLRenderer({
   antialias: true,
   alpha: true,
 });
+renderer.gammaOutput = true;
+renderer.gammaFactor = 2.2;
+renderer.physicallyCorrectLights = true;
+renderer.toneMappingExposure = 1;
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.sortObjects = false;
