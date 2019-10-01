@@ -30,25 +30,28 @@ scene.add(camera);
 /* const ambientLight = new THREE.AmbientLight(0x333333, 1);
 scene.add(ambientLight); */
 
-const directionalLight = new THREE.DirectionalLight(0x808080, 2);
-directionalLight.position.set(30, 50, 30);
+const directionalLight = new THREE.DirectionalLight(0xFFFFFF, 3);
+directionalLight.position.set(10, 30, 10);
 scene.add(directionalLight);
+
+/* const directionalLight2 = new THREE.DirectionalLight(0xFFFFFF, 2);
+directionalLight2.position.set(0, 30, -10);
+scene.add(directionalLight2); */
 
 const summerMesh = (() => {
   const object = new THREE.Object3D();
 
   const loader = new THREE.GLTFLoader()//.setPath( 'models/' );
-  // loader.load('room.glb', function(o) {
-  loader.load('swamp.glb', function(o) {
-    console.log('loaded model', o);
-    window.o = o;
+  loader.load('room.glb', function(o) {
+  // loader.load('swamp.glb', function(o) {
     o = o.scene;
     const map = null;
     o.traverse(e => {
       if (e.isMesh) {
         // e.receiveShadow = true;
+        // e.castShadow = true;
 
-        if (Array.isArray(e.material)) {
+        /* if (Array.isArray(e.material)) {
           for (let material of e.material) {
             if (material.isMeshBasicMaterial) {
               continue;
@@ -59,7 +62,7 @@ const summerMesh = (() => {
         } else if (e.material && !e.material.isMeshBasicMaterial) {
           e.material.envMap = map;
           e.material.needsUpdate = true;
-        }
+        } */
 
         /* e.material.color = new THREE.Color(0.4, 0.4, 0.4);
         e.material.metalness = 0.4;
