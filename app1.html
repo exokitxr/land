@@ -76,31 +76,15 @@ const modelMesh = (() => {
 })();
 scene.add(modelMesh);
 
-const lightsaberMesh = (() => {
-  const object = new THREE.Object3D();
-
-  const loader = new THREE.GLTFLoader();
-  loader.load('lightsaber.glb', function(o) {
-    o = o.scene;
-    /* o.traverse(e => {
-      if (e.isMesh) {
-        e.receiveShadow = true;
-      }
-    }); */
-
-    // o.updateMatrixWorld();
-    object.add(o);
-  }, undefined, function(e) {
-    console.error(e);
-  });
-
-  return object;
-})();
-lightsaberMesh.position.y = 1.5;
-scene.add(lightsaberMesh);
+const lightsaberIframe = document.createElement('xr-iframe');
+lightsaberIframe.src = 'lightsaber.html';
+lightsaberIframe.position = [0, 1, 0];
 
 const session = await navigator.xr.requestSession();
-session.layers && session.layers.push(renderer.domElement);
+if (session.layers) {
+  session.layers.push(renderer.domElement);
+  session.layers.push(lightsaberIframe);
+}
 session.requestAnimationFrame((timestamp, frame) => {
   renderer.vr.setSession(session, {
     frameOfReferenceType: 'stage',
