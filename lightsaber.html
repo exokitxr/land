@@ -123,6 +123,7 @@ session.requestAnimationFrame((timestamp, frame) => {
 });
 
 const lastPresseds = Array(cubeMeshes.length).fill(false);
+const lastGrabbeds = Array(cubeMeshes.length).fill(false);
 function animate() {
   const gamepads = navigator.getGamepads();
   for (let i = 0; i < gamepads.length && i < cubeMeshes.length; i++) {
@@ -145,9 +146,10 @@ function animate() {
       } else {
         cubeMesh.material.color.setHex(0x333333);
       }
-      const pressed = gamepad.buttons[1].pressed;
-      const lastPressed = lastPresseds[i];
-      if (pressed && !lastPressed) {
+
+      const grabbed = gamepad.buttons[2].pressed;
+      const lastGrabbed = lastGrabbeds[i];
+      if (grabbed && !lastGrabbed) {
         if (lightsaberMesh.parent === scene) {
           const distance = cubeMesh.position.distanceTo(lightsaberMesh.position);
           if (distance < 0.15) {
@@ -156,11 +158,24 @@ function animate() {
             cubeMesh.add(lightsaberMesh);
           }
         }
-      } else if (!pressed && lastPressed) {
+      } else if (!grabbed && lastGrabbed) {
         if (lightsaberMesh.parent !== scene) {
           lightsaberMesh.position.copy(lightsaberMesh.parent.position);
           lightsaberMesh.quaternion.copy(lightsaberMesh.parent.quaternion);
           scene.add(lightsaberMesh);
+
+          lightsaberMesh.setState(false);
+        }
+      }
+      lastGrabbeds[i] = grabbed;
+
+      const pressed = gamepad.buttons[1].pressed;
+      const lastPressed = lastPresseds[i];
+      if (lightsaberMesh.parent === cubeMesh) {
+        if (pressed && !lastPressed) {
+          lightsaberMesh.setState(true);
+        } else if (!pressed && lastPressed) {
+          lightsaberMesh.setState(false);
         }
       }
       lastPresseds[i] = pressed;
