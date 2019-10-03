@@ -55,9 +55,9 @@ const lightsaberMesh = (() => {
 
   const bladeMesh = (() => {
     const geometry = THREE.BufferGeometryUtils.mergeBufferGeometries([
-      new THREE.BoxBufferGeometry(0.01, 0.01, 1).applyMatrix(new THREE.Matrix4().makeTranslation(0, 0, -1/2 - 0.16)),
-      new THREE.BoxBufferGeometry(0.1, 0.01, 0.01).applyMatrix(new THREE.Matrix4().makeTranslation(-0.1/2 - 0.06, 0, -0.15)),
-      new THREE.BoxBufferGeometry(0.1, 0.01, 0.01).applyMatrix(new THREE.Matrix4().makeTranslation(0.1/2 + 0.06, 0, -0.15)),
+      new THREE.BoxBufferGeometry(0.01, 0.01, 1).applyMatrix(new THREE.Matrix4().makeTranslation(0, 0, -1/2 - 0.17)),
+      new THREE.BoxBufferGeometry(0.1, 0.01, 0.01).applyMatrix(new THREE.Matrix4().makeTranslation(-0.1/2 - 0.06, 0, -0.145)),
+      new THREE.BoxBufferGeometry(0.1, 0.01, 0.01).applyMatrix(new THREE.Matrix4().makeTranslation(0.1/2 + 0.06, 0, -0.145)),
     ]);
     const material = new THREE.MeshPhongMaterial({
       // color: 0x800000,
