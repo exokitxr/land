@@ -1,0 +1,155 @@
+<!doctype html>
+<html>
+<body>
+<script src="js/three.js"></script>
+<script src="js/GLTFLoader.js"></script>
+<script>
+(async () => {
+
+const renderer = new THREE.WebGLRenderer({
+  antialias: true,
+  alpha: true,
+});
+renderer.gammaOutput = true;
+renderer.gammaFactor = 2.2;
+renderer.physicallyCorrectLights = true;
+renderer.toneMappingExposure = 1;
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.sortObjects = false;
+// renderer.shadowMap.enabled = true;
+// renderer.shadowMap.type = THREE.PCFShadowMap;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.matrixAutoUpdate = false;
+
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+scene.add(camera);
+
+/* const ambientLight = new THREE.AmbientLight(0x333333, 1);
+scene.add(ambientLight); */
+
+const directionalLight = new THREE.DirectionalLight(0xFFFFFF, 3);
+directionalLight.position.set(10, 30, 10);
+scene.add(directionalLight);
+
+const lightsaberMesh = (() => {
+  const object = new THREE.Object3D();
+
+  const loader = new THREE.GLTFLoader();
+  loader.load('lightsaber.glb', function(o) {
+    o = o.scene;
+    /* o.traverse(e => {
+      if (e.isMesh) {
+        e.receiveShadow = true;
+      }
+    }); */
+
+    // o.updateMatrixWorld();
+    object.add(o);
+  }, undefined, function(e) {
+    console.error(e);
+  });
+
+  return object;
+})();
+scene.add(lightsaberMesh);
+
+const cubeGeometry = new THREE.BoxBufferGeometry(0.02, 0.05, 0.01);
+const _makeCubeMesh = () => {
+  const geometry = cubeGeometry;
+  const material = new THREE.MeshPhongMaterial({
+    color: 0x333333,
+  });
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.frustumCulled = false;
+  return mesh;
+};
+const cubeMeshes = [
+  _makeCubeMesh(),
+  _makeCubeMesh(),
+];
+scene.add(cubeMeshes[0]);
+scene.add(cubeMeshes[1]);
+
+const session = await navigator.xr.requestSession();
+session.layers && session.layers.push(renderer.domElement);
+session.requestAnimationFrame((timestamp, frame) => {
+  renderer.vr.setSession(session, {
+    frameOfReferenceType: 'stage',
+  });
+
+  const pose = frame.getViewerPose();
+  const viewport = session.baseLayer.getViewport(pose.views[0]);
+  // const width = viewport.width;
+  const height = viewport.height;
+  const fullWidth = (() => {
+    let result = 0;
+    for (let i = 0; i < pose.views.length; i++) {
+      result += session.baseLayer.getViewport(pose.views[i]).width;
+    }
+    return result;
+  })();
+  renderer.setSize(fullWidth, height);
+  renderer.setPixelRatio(1);
+
+  renderer.setAnimationLoop(null);
+
+  renderer.vr.enabled = true;
+  renderer.vr.setSession(session);
+  renderer.vr.setAnimationLoop(animate);
+});
+
+const lastPresseds = Array(cubeMeshes.length).fill(false);
+function animate() {
+  const gamepads = navigator.getGamepads();
+  for (let i = 0; i < gamepads.length && i < cubeMeshes.length; i++) {
+    const gamepad = gamepads[i];
+    const cubeMesh = cubeMeshes[i];
+    if (gamepad && gamepad.connected) {
+      cubeMesh.position.fromArray(gamepad.pose.position);
+      cubeMesh.quaternion.fromArray(gamepad.pose.orientation);
+
+      if (gamepad.buttons[0].pressed) {
+        cubeMesh.material.color.setHex(0xFF0000);
+      } else if (gamepad.buttons[1].pressed) {
+        cubeMesh.material.color.setHex(0x00FF00);
+      } else if (gamepad.buttons[2].pressed) {
+        cubeMesh.material.color.setHex(0x0000FF);
+      } else if (gamepad.buttons[3].pressed) {
+        cubeMesh.material.color.setHex(0xFFFF00);
+      } else if (gamepad.buttons[4].pressed) {
+        cubeMesh.material.color.setHex(0x00FFFF);
+      } else {
+        cubeMesh.material.color.setHex(0x333333);
+      }
+      const pressed = gamepad.buttons[1].pressed;
+      const lastPressed = lastPresseds[i];
+      if (pressed && !lastPressed) {
+        if (lightsaberMesh.parent === scene) {
+          const distance = cubeMesh.position.distanceTo(lightsaberMesh.position);
+          if (distance < 0.15) {
+            lightsaberMesh.position.set(0, 0, 0);
+            lightsaberMesh.quaternion.set(0, 0, 0, 1);
+            cubeMesh.add(lightsaberMesh);
+          }
+        }
+      } else if (!pressed && lastPressed) {
+        if (lightsaberMesh.parent !== scene) {
+          lightsaberMesh.position.copy(lightsaberMesh.parent.position);
+          lightsaberMesh.quaternion.copy(lightsaberMesh.parent.quaternion);
+          scene.add(lightsaberMesh);
+        }
+      }
+      lastPresseds[i] = pressed;
+    }
+  }
+
+  renderer.render(scene, camera);
+}
+
+})();
+</script>
+</body>
+</html>
