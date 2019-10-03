@@ -53,6 +53,26 @@ const lightsaberMesh = (() => {
     console.error(e);
   });
 
+  const bladeMesh = (() => {
+    const geometry = THREE.BufferGeometryUtils.mergeBufferGeometries([
+      new THREE.BoxBufferGeometry(0.01, 0.01, 1).applyMatrix(new THREE.Matrix4().makeTranslation(0, 0, -1/2 - 0.16)),
+      new THREE.BoxBufferGeometry(0.1, 0.01, 0.01).applyMatrix(new THREE.Matrix4().makeTranslation(-0.1/2 - 0.06, 0, -0.15)),
+      new THREE.BoxBufferGeometry(0.1, 0.01, 0.01).applyMatrix(new THREE.Matrix4().makeTranslation(0.1/2 + 0.06, 0, -0.15)),
+    ]);
+    const material = new THREE.MeshPhongMaterial({
+      // color: 0x800000,
+      color: 0xFF4040,
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.visible = false;
+    mesh.frustumCulled = false;
+    return mesh;
+  })();
+  object.add(bladeMesh);
+  object.setState = enabled => {
+    bladeMesh.visible = enabled;
+  };
+
   return object;
 })();
 scene.add(lightsaberMesh);
