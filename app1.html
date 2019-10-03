@@ -79,6 +79,7 @@ scene.add(modelMesh);
 const lightsaberIframe = document.createElement('xr-iframe');
 lightsaberIframe.src = 'lightsaber.html';
 lightsaberIframe.position = [0, 1, 0];
+document.body.appendChild(lightsaberIframe);
 
 const session = await navigator.xr.requestSession();
 if (session.layers) {
