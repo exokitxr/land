@@ -158,6 +158,8 @@ function animate() {
             /* lightsaberMesh.position.set(0, 0, 0);
             lightsaberMesh.quaternion.set(0, 0, 0, 1);
             cubeMesh.add(lightsaberMesh); */
+
+            lightsaberMesh.grabbed = true;
           }
         }
       } else if (!grabbed && lastGrabbed) {
@@ -166,6 +168,7 @@ function animate() {
           lightsaberMesh.quaternion.copy(lightsaberMesh.parent.quaternion);
           scene.add(lightsaberMesh); */
 
+          lightsaberMesh.grabbed = false;
           lightsaberMesh.setState(false);
         }
       }
