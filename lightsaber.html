@@ -8,7 +8,9 @@
 (async () => {
 
 const localVector = new THREE.Vector3();
+const localVector2 = new THREE.Vector3();
 const localQuaternion = new THREE.Quaternion();
+const localMatrix = new THREE.Matrix4();
 
 const renderer = new THREE.WebGLRenderer({
   antialias: true,
@@ -137,6 +139,7 @@ function animate() {
     if (gamepad && gamepad.connected) {
       cubeMesh.position.fromArray(gamepad.pose.position);
       cubeMesh.quaternion.fromArray(gamepad.pose.orientation);
+      cubeMesh.updateMatrixWorld();
 
       if (gamepad.buttons[0].pressed) {
         cubeMesh.material.color.setHex(0xFF0000);
@@ -162,7 +165,6 @@ function animate() {
             lightsaberMesh.quaternion.set(0, 0, 0, 1);
             cubeMesh.add(lightsaberMesh); */
 
-            console.log('set grabbed 1');
             lightsaberMesh.grabIndex = i;
           }
         }
@@ -172,7 +174,6 @@ function animate() {
           lightsaberMesh.quaternion.copy(lightsaberMesh.parent.quaternion);
           scene.add(lightsaberMesh); */
 
-          console.log('unset grabbed 1');
           lightsaberMesh.grabIndex = -1;
           lightsaberMesh.setState(false);
         }
@@ -192,11 +193,19 @@ function animate() {
 
       if (lightsaberMesh.grabIndex === i) {
         const cubeMesh = cubeMeshes[lightsaberMesh.grabIndex];
-        // console.log('lightsaber offset change 1', cubeMesh.position.toArray().join(','));
-        const {position, orientation} = window.document.xrOffset;
-        window.document.xrOffset.position = localVector.fromArray(position).add(cubeMesh.position).toArray();
-        // console.log('lightsaber offset change 2');
-        window.document.xrOffset.orientation = localQuaternion.fromArray(orientation).multiply(cubeMesh.quaternion).toArray();
+        localMatrix
+          .compose(
+            localVector.fromArray(window.document.xrOffset.position),
+            localQuaternion.fromArray(window.document.xrOffset.orientation),
+            localVector2.set(1, 1, 1)
+          )
+          .multiply(cubeMesh.matrixWorld)
+          .decompose(localVector, localQuaternion, localVector2)
+
+        window.document.xrOffset.position = localVector.toArray();
+        window.document.xrOffset.orientation = localQuaternion.toArray();
+        /* window.document.xrOffset.position = localVector.fromArray(position).add(cubeMesh.position).toArray();
+        window.document.xrOffset.orientation = localQuaternion.fromArray(orientation).multiply(cubeMesh.quaternion).toArray(); */
       }
     }
   }
