@@ -11,6 +11,7 @@ const localVector = new THREE.Vector3();
 const localVector2 = new THREE.Vector3();
 const localQuaternion = new THREE.Quaternion();
 const localMatrix = new THREE.Matrix4();
+const localMatrix2 = new THREE.Matrix4();
 
 const renderer = new THREE.WebGLRenderer({
   antialias: true,
@@ -76,6 +77,7 @@ const lightsaberMesh = (() => {
   object.add(bladeMesh);
 
   object.grabIndex = -1;
+  object.equipper = null;
   object.setState = enabled => {
     bladeMesh.visible = enabled;
   };
@@ -131,6 +133,9 @@ session.requestAnimationFrame((timestamp, frame) => {
 const lastPresseds = Array(cubeMeshes.length).fill(false);
 const lastGrabbeds = Array(cubeMeshes.length).fill(false);
 function animate() {
+  const vrCamera = renderer.vr.enabled ? renderer.vr.getCamera(camera).cameras[0] : camera;
+  vrCamera.matrixWorld.decompose(vrCamera.position, vrCamera.quaternion, vrCamera.scale);
+
   const gamepads = navigator.getGamepads();
   for (let i = 0; i < gamepads.length && i < cubeMeshes.length; i++) {
     const gamepad = gamepads[i];
@@ -161,12 +166,20 @@ function animate() {
           const distance = cubeMesh.position.distanceTo(lightsaberMesh.position);
           if (distance < 0.15) {
             lightsaberMesh.grabIndex = i;
+            lightsaberMesh.equipper = null;
           }
         }
       } else if (!grabbed && lastGrabbed) {
         if (lightsaberMesh.grabIndex !== -1) {
           lightsaberMesh.grabIndex = -1;
           lightsaberMesh.setState(false);
+
+          localVector.copy(vrCamera.position).add(localVector2.set(0, -0.5, 0));
+          const distance = lightsaberMesh.position.distanceTo(localVector);
+          console.log('equipper distance', distance);
+          if (distance < 0.3) {
+            lightsaberMesh.equipper = 'user';
+          }
         }
       }
       lastGrabbeds[i] = grabbed;
@@ -182,19 +195,35 @@ function animate() {
       }
       lastPresseds[i] = pressed;
 
-      if (lightsaberMesh.grabIndex === i) {
-        const cubeMesh = cubeMeshes[lightsaberMesh.grabIndex];
-        localMatrix
+      const _setMatrixWorld = matrixWorld => {
+        localMatrix2
           .compose(
             localVector.fromArray(window.document.xrOffset.position),
             localQuaternion.fromArray(window.document.xrOffset.orientation),
             localVector2.set(1, 1, 1)
           )
-          .multiply(cubeMesh.matrixWorld)
+          .multiply(matrixWorld)
           .decompose(localVector, localQuaternion, localVector2)
-
         window.document.xrOffset.position = localVector.toArray();
         window.document.xrOffset.orientation = localQuaternion.toArray();
+      };
+      if (lightsaberMesh.grabIndex === i) {
+        _setMatrixWorld(cubeMeshes[lightsaberMesh.grabIndex].matrixWorld);
+      } else if (lightsaberMesh.equipper === 'user') {
+        localEuler.setFromQuaternion(vrCamera.quaternion, localEuler.order);
+        localEuler.x = 0;
+        localEuler.z = 0;
+        _setMatrixWorld(
+          localMatrix.compose(
+            localVector
+              .copy(vrCamera.position)
+              .add(localVector2.set(0, -0.5, 0))
+              .add(localVector2.set(0, 0.2, 0)
+              .applyEuler(localEuler)),
+            localQuaternion.set(0, 0, 0, 1),
+            localVector2.set(1, 1, 1)
+          )
+        );
       }
     }
   }
