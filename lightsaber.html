@@ -7,6 +7,9 @@
 <script>
 (async () => {
 
+const localVector = new THREE.Vector3();
+const localQuaternion = new THREE.Quaternion();
+
 const renderer = new THREE.WebGLRenderer({
   antialias: true,
   alpha: true,
@@ -70,7 +73,7 @@ const lightsaberMesh = (() => {
   })();
   object.add(bladeMesh);
 
-  object.grabbed = false;
+  object.grabIndex = -1;
   object.setState = enabled => {
     bladeMesh.visible = enabled;
   };
@@ -152,23 +155,25 @@ function animate() {
       const grabbed = gamepad.buttons[2].pressed;
       const lastGrabbed = lastGrabbeds[i];
       if (grabbed && !lastGrabbed) {
-        if (!lightsaberMesh.grabbed) {
+        if (lightsaberMesh.grabIndex === -1) {
           const distance = cubeMesh.position.distanceTo(lightsaberMesh.position);
           if (distance < 0.15) {
             /* lightsaberMesh.position.set(0, 0, 0);
             lightsaberMesh.quaternion.set(0, 0, 0, 1);
             cubeMesh.add(lightsaberMesh); */
 
-            lightsaberMesh.grabbed = true;
+            console.log('set grabbed 1');
+            lightsaberMesh.grabIndex = i;
           }
         }
       } else if (!grabbed && lastGrabbed) {
-        if (lightsaberMesh.grabbed) {
+        if (lightsaberMesh.grabIndex !== -1) {
           /* lightsaberMesh.position.copy(lightsaberMesh.parent.position);
           lightsaberMesh.quaternion.copy(lightsaberMesh.parent.quaternion);
           scene.add(lightsaberMesh); */
 
-          lightsaberMesh.grabbed = false;
+          console.log('unset grabbed 1');
+          lightsaberMesh.grabIndex = -1;
           lightsaberMesh.setState(false);
         }
       }
@@ -176,7 +181,7 @@ function animate() {
 
       const pressed = gamepad.buttons[1].pressed;
       const lastPressed = lastPresseds[i];
-      if (lightsaberMesh.grabbed) {
+      if (lightsaberMesh.grabIndex === i) {
         if (pressed && !lastPressed) {
           lightsaberMesh.setState(true);
         } else if (!pressed && lastPressed) {
@@ -185,9 +190,13 @@ function animate() {
       }
       lastPresseds[i] = pressed;
 
-      if (lightsaberMesh.grabbed) {
-        window.document.xrOffset.position = lightsaberMesh.position.toArray();
-        window.document.xrOffset.orientation = lightsaberMesh.quaternion.toArray();
+      if (lightsaberMesh.grabIndex === i) {
+        const cubeMesh = cubeMeshes[lightsaberMesh.grabIndex];
+        // console.log('lightsaber offset change 1', cubeMesh.position.toArray().join(','));
+        const {position, orientation} = window.document.xrOffset;
+        window.document.xrOffset.position = localVector.fromArray(position).add(cubeMesh.position).toArray();
+        // console.log('lightsaber offset change 2');
+        window.document.xrOffset.orientation = localQuaternion.fromArray(orientation).multiply(cubeMesh.quaternion).toArray();
       }
     }
   }
