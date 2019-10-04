@@ -69,6 +69,8 @@ const lightsaberMesh = (() => {
     return mesh;
   })();
   object.add(bladeMesh);
+
+  object.grabbed = false;
   object.setState = enabled => {
     bladeMesh.visible = enabled;
   };
@@ -150,19 +152,19 @@ function animate() {
       const grabbed = gamepad.buttons[2].pressed;
       const lastGrabbed = lastGrabbeds[i];
       if (grabbed && !lastGrabbed) {
-        if (lightsaberMesh.parent === scene) {
+        if (!lightsaberMesh.grabbed) {
           const distance = cubeMesh.position.distanceTo(lightsaberMesh.position);
           if (distance < 0.15) {
-            lightsaberMesh.position.set(0, 0, 0);
+            /* lightsaberMesh.position.set(0, 0, 0);
             lightsaberMesh.quaternion.set(0, 0, 0, 1);
-            cubeMesh.add(lightsaberMesh);
+            cubeMesh.add(lightsaberMesh); */
           }
         }
       } else if (!grabbed && lastGrabbed) {
-        if (lightsaberMesh.parent !== scene) {
-          lightsaberMesh.position.copy(lightsaberMesh.parent.position);
+        if (lightsaberMesh.grabbed) {
+          /* lightsaberMesh.position.copy(lightsaberMesh.parent.position);
           lightsaberMesh.quaternion.copy(lightsaberMesh.parent.quaternion);
-          scene.add(lightsaberMesh);
+          scene.add(lightsaberMesh); */
 
           lightsaberMesh.setState(false);
         }
@@ -171,7 +173,7 @@ function animate() {
 
       const pressed = gamepad.buttons[1].pressed;
       const lastPressed = lastPresseds[i];
-      if (lightsaberMesh.parent === cubeMesh) {
+      if (lightsaberMesh.grabbed) {
         if (pressed && !lastPressed) {
           lightsaberMesh.setState(true);
         } else if (!pressed && lastPressed) {
@@ -179,6 +181,11 @@ function animate() {
         }
       }
       lastPresseds[i] = pressed;
+
+      if (lightsaberMesh.grabbed) {
+        window.document.xrOffset.position = lightsaberMesh.position.toArray();
+        window.document.xrOffset.orientation = lightsaberMesh.quaternion.toArray();
+      }
     }
   }
 
