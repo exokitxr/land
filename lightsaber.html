@@ -82,8 +82,14 @@ const lightsaberMesh = (() => {
 
   object.grabIndex = -1;
   object.equipper = null;
+  window.document.dataset.addEventListener('change', e => {
+    const {key, value} = e.detail;
+    if (key === 'enabled') {
+      bladeMesh.visible = value;
+    }
+  });
   object.setState = enabled => {
-    bladeMesh.visible = enabled;
+    window.document.dataset.set('enabled', enabled);
   };
 
   return object;
