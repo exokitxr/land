@@ -110,7 +110,6 @@ session.requestAnimationFrame((timestamp, frame) => {
 
   const pose = frame.getViewerPose();
   const viewport = session.baseLayer.getViewport(pose.views[0]);
-  // const width = viewport.width;
   const height = viewport.height;
   const fullWidth = (() => {
     let result = 0;
@@ -161,19 +160,11 @@ function animate() {
         if (lightsaberMesh.grabIndex === -1) {
           const distance = cubeMesh.position.distanceTo(lightsaberMesh.position);
           if (distance < 0.15) {
-            /* lightsaberMesh.position.set(0, 0, 0);
-            lightsaberMesh.quaternion.set(0, 0, 0, 1);
-            cubeMesh.add(lightsaberMesh); */
-
             lightsaberMesh.grabIndex = i;
           }
         }
       } else if (!grabbed && lastGrabbed) {
         if (lightsaberMesh.grabIndex !== -1) {
-          /* lightsaberMesh.position.copy(lightsaberMesh.parent.position);
-          lightsaberMesh.quaternion.copy(lightsaberMesh.parent.quaternion);
-          scene.add(lightsaberMesh); */
-
           lightsaberMesh.grabIndex = -1;
           lightsaberMesh.setState(false);
         }
@@ -204,8 +195,6 @@ function animate() {
 
         window.document.xrOffset.position = localVector.toArray();
         window.document.xrOffset.orientation = localQuaternion.toArray();
-        /* window.document.xrOffset.position = localVector.fromArray(position).add(cubeMesh.position).toArray();
-        window.document.xrOffset.orientation = localQuaternion.fromArray(orientation).multiply(cubeMesh.quaternion).toArray(); */
       }
     }
   }
