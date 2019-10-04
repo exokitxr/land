@@ -10,8 +10,12 @@
 const localVector = new THREE.Vector3();
 const localVector2 = new THREE.Vector3();
 const localQuaternion = new THREE.Quaternion();
+const localEuler = new THREE.Euler();
+localEuler.order = 'YXZ';
 const localMatrix = new THREE.Matrix4();
 const localMatrix2 = new THREE.Matrix4();
+const localMatrixWorld = new THREE.Matrix4();
+const localVector2D = new THREE.Vector2();
 
 const renderer = new THREE.WebGLRenderer({
   antialias: true,
@@ -103,6 +107,20 @@ const cubeMeshes = [
 scene.add(cubeMeshes[0]);
 scene.add(cubeMeshes[1]);
 
+const cameraCubeMesh = (() => {
+  const geometry = new THREE.BoxBufferGeometry(0.5, 0.5, 0.5);
+  const material = new THREE.MeshPhongMaterial({
+    color: 0x333333,
+    /* side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 0.5, */
+  });
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.frustumCulled = false;
+  return mesh;
+})()
+// scene.add(cameraCubeMesh);
+
 const session = await navigator.xr.requestSession();
 session.layers && session.layers.push(renderer.domElement);
 session.requestAnimationFrame((timestamp, frame) => {
@@ -132,9 +150,23 @@ session.requestAnimationFrame((timestamp, frame) => {
 
 const lastPresseds = Array(cubeMeshes.length).fill(false);
 const lastGrabbeds = Array(cubeMeshes.length).fill(false);
+const _setMatrixWorld = matrixWorld => {
+  localMatrixWorld
+    .compose(
+      localVector.fromArray(window.document.xrOffset.position),
+      localQuaternion.fromArray(window.document.xrOffset.orientation),
+      localVector2.set(1, 1, 1)
+    )
+    .multiply(matrixWorld)
+    .decompose(localVector, localQuaternion, localVector2)
+  window.document.xrOffset.position = localVector.toArray();
+  window.document.xrOffset.orientation = localQuaternion.toArray();
+};
 function animate() {
   const vrCamera = renderer.vr.enabled ? renderer.vr.getCamera(camera).cameras[0] : camera;
   vrCamera.matrixWorld.decompose(vrCamera.position, vrCamera.quaternion, vrCamera.scale);
+
+  cameraCubeMesh.position.copy(vrCamera.position).add(localVector2.set(0, -0.5, 0));
 
   const gamepads = navigator.getGamepads();
   for (let i = 0; i < gamepads.length && i < cubeMeshes.length; i++) {
@@ -164,20 +196,31 @@ function animate() {
       if (grabbed && !lastGrabbed) {
         if (lightsaberMesh.grabIndex === -1) {
           const distance = cubeMesh.position.distanceTo(lightsaberMesh.position);
-          if (distance < 0.15) {
+          if (distance < 0.16) {
             lightsaberMesh.grabIndex = i;
             lightsaberMesh.equipper = null;
           }
         }
       } else if (!grabbed && lastGrabbed) {
-        if (lightsaberMesh.grabIndex !== -1) {
+        if (lightsaberMesh.grabIndex === i) {
           lightsaberMesh.grabIndex = -1;
           lightsaberMesh.setState(false);
 
-          localVector.copy(vrCamera.position).add(localVector2.set(0, -0.5, 0));
-          const distance = lightsaberMesh.position.distanceTo(localVector);
-          console.log('equipper distance', distance);
-          if (distance < 0.3) {
+          localMatrix.fromArray(window.document.xrOffset.matrix).decompose(localVector, localQuaternion, localVector2);
+          const lightsaberWorldPosition = localVector.clone();
+          localMatrix
+            .copy(vrCamera.matrixWorld)
+            .premultiply(
+              localMatrix2.fromArray(window.document.xrOffset.matrix)//.getInverse(localMatrix2)
+            )
+            .decompose(localVector, localQuaternion, localVector2);
+          const bodyWorldPosition = localVector.add(localVector2.set(0, -0.5, 0)).clone();
+
+          const distance = lightsaberWorldPosition.distanceTo(bodyWorldPosition);
+          localVector2D.set(Math.abs(lightsaberWorldPosition.x - bodyWorldPosition.x), Math.abs(lightsaberWorldPosition.z - bodyWorldPosition.z));
+          // console.log('equipper distance', localVector2D.length(), Math.abs(lightsaberWorldPosition.y - bodyWorldPosition.y));
+          if (localVector2D.length() < 0.45 && Math.abs(lightsaberWorldPosition.y - bodyWorldPosition.y) < 0.16) {
+            // console.log('equipped');
             lightsaberMesh.equipper = 'user';
           }
         }
@@ -195,37 +238,43 @@ function animate() {
       }
       lastPresseds[i] = pressed;
 
-      const _setMatrixWorld = matrixWorld => {
-        localMatrix2
-          .compose(
-            localVector.fromArray(window.document.xrOffset.position),
-            localQuaternion.fromArray(window.document.xrOffset.orientation),
-            localVector2.set(1, 1, 1)
-          )
-          .multiply(matrixWorld)
-          .decompose(localVector, localQuaternion, localVector2)
-        window.document.xrOffset.position = localVector.toArray();
-        window.document.xrOffset.orientation = localQuaternion.toArray();
-      };
       if (lightsaberMesh.grabIndex === i) {
         _setMatrixWorld(cubeMeshes[lightsaberMesh.grabIndex].matrixWorld);
-      } else if (lightsaberMesh.equipper === 'user') {
-        localEuler.setFromQuaternion(vrCamera.quaternion, localEuler.order);
-        localEuler.x = 0;
-        localEuler.z = 0;
-        _setMatrixWorld(
-          localMatrix.compose(
-            localVector
-              .copy(vrCamera.position)
-              .add(localVector2.set(0, -0.5, 0))
-              .add(localVector2.set(0, 0.2, 0)
-              .applyEuler(localEuler)),
-            localQuaternion.set(0, 0, 0, 1),
-            localVector2.set(1, 1, 1)
-          )
-        );
       }
     }
+  }
+
+  if (lightsaberMesh.equipper === 'user') {
+    localMatrix
+      .copy(vrCamera.matrixWorld)
+      .premultiply(
+        localMatrix2.fromArray(window.document.xrOffset.matrix)//.getInverse(localMatrix2)
+      )
+      .decompose(localVector, localQuaternion, localVector2);
+
+    localEuler.setFromQuaternion(localQuaternion, localEuler.order);
+    localEuler.x = 0;
+    localEuler.z = 0;
+    localQuaternion.setFromEuler(localEuler);
+
+    localVector
+      .add(localVector2.set(0, -0.5, 0))
+      .add(
+        localVector2
+          .set(0.2, 0, 0)
+          .applyQuaternion(localQuaternion)
+      );
+
+    window.document.xrOffset.position = localVector.toArray();
+    window.document.xrOffset.orientation = localQuaternion.toArray();
+
+    /* _setMatrixWorld(
+      localMatrix.compose(
+        localVector,
+        localQuaternion,
+        localVector2.set(1, 1, 1)
+      )
+    ); */
   }
 
   renderer.render(scene, camera);
