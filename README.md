@@ -1,4 +1,4 @@
-# XRLAND
+# Land
 
 This repository is a world made out of worlds on the web. https://root.exokit.org/
 
