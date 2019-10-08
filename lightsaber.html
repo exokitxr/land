@@ -81,7 +81,6 @@ const lightsaberMesh = (() => {
   object.add(bladeMesh);
 
   object.grabIndex = -1;
-  object.equipper = null;
   window.document.dataset.addEventListener('change', e => {
     const {key, value} = e.detail;
     if (key === 'enabled') {
@@ -90,6 +89,10 @@ const lightsaberMesh = (() => {
   });
   object.setState = enabled => {
     window.document.dataset.set('enabled', enabled);
+  };
+  object.getEquipper = () => window.document.dataset.get('equipper');
+  object.setEquipper = equipper => {
+    window.document.dataset.set('equipper', equipper);
   };
 
   return object;
@@ -204,7 +207,7 @@ function animate() {
           const distance = cubeMesh.position.distanceTo(lightsaberMesh.position);
           if (distance < 0.16) {
             lightsaberMesh.grabIndex = i;
-            lightsaberMesh.equipper = null;
+            lightsaberMesh.setEquipper(null);
           }
         }
       } else if (!grabbed && lastGrabbed) {
@@ -227,7 +230,7 @@ function animate() {
           // console.log('equipper distance', localVector2D.length(), Math.abs(lightsaberWorldPosition.y - bodyWorldPosition.y));
           if (localVector2D.length() < 0.45 && Math.abs(lightsaberWorldPosition.y - bodyWorldPosition.y) < 0.16) {
             // console.log('equipped');
-            lightsaberMesh.equipper = 'user';
+            lightsaberMesh.setEquipper('user');
           }
         }
       }
@@ -250,7 +253,7 @@ function animate() {
     }
   }
 
-  if (lightsaberMesh.equipper === 'user') {
+  if (lightsaberMesh.getEquipper() === 'user') {
     localMatrix
       .copy(vrCamera.matrixWorld)
       .premultiply(
