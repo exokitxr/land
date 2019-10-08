@@ -78,6 +78,7 @@ const lightsaberMesh = (() => {
     mesh.frustumCulled = false;
     return mesh;
   })();
+  bladeMesh.visible = window.document.dataset.get('enabled');
   object.add(bladeMesh);
 
   object.grabIndex = -1;
