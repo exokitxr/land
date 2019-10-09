@@ -17,6 +17,8 @@ const localMatrix2 = new THREE.Matrix4();
 const localMatrixWorld = new THREE.Matrix4();
 const localVector2D = new THREE.Vector2();
 
+const userId = Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5);
+
 const renderer = new THREE.WebGLRenderer({
   antialias: true,
   alpha: true,
@@ -231,7 +233,7 @@ function animate() {
           // console.log('equipper distance', localVector2D.length(), Math.abs(lightsaberWorldPosition.y - bodyWorldPosition.y));
           if (localVector2D.length() < 0.45 && Math.abs(lightsaberWorldPosition.y - bodyWorldPosition.y) < 0.16) {
             // console.log('equipped');
-            lightsaberMesh.setEquipper('user');
+            lightsaberMesh.setEquipper(userId);
           }
         }
       }
@@ -254,7 +256,7 @@ function animate() {
     }
   }
 
-  if (lightsaberMesh.getEquipper() === 'user') {
+  if (lightsaberMesh.getEquipper() === userId) {
     localMatrix
       .copy(vrCamera.matrixWorld)
       .premultiply(
